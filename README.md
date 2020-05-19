@@ -1,3 +1,4 @@
 # MyLearning
-something interesting.
-not interesting at all
+Learn github
+Learn markdown
+learn java
