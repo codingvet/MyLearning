@@ -1,4 +1,4 @@
 # MyLearning
-Learn github\n
-Learn markdown\n
-learn java
+Learn github;
+Learn markdown;
+learn java;
