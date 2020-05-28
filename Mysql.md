@@ -731,7 +731,7 @@ select * from 表名;  查询所有
         - 修改默认提交方式： set @@autocommit = 0;
         - Oracle 数据库默认是手动提交事务
 - 事务的四大特征：
-    - 
+    - 隔离性
 
 ##  DCL
 
