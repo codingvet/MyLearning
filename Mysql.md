@@ -9,16 +9,14 @@
 2. 创建配置文件 my.ini
 
     [mysql] 
+default-character-set=utf8 
+    
 
-    default-character-set=utf8 
-
-    [mysqld] 
-
+[mysqld] 
     character-set-server=utf8 
-
-    default-storage-engine=INNODB
-
-3. 初始化mysql
+default-storage-engine=INNODB
+    
+3. 初始化mysql（注意，不要在安装文件下新建data文件夹，系统将自动生成）
 
     mysqld --initialize-insecure
 
@@ -37,7 +35,7 @@
 7. 登入
 
     mysql -uroot p1234
-    
+
     
 
 ##  SQL语句
@@ -50,7 +48,7 @@
     - DDL 操作数据库和表
     - DML 增删改表中数据
     - DQL 查询表中数据
-    - DCL 客户端授权
+    - DCL 管理用户，授权
 
 ###   DDL
 
@@ -101,9 +99,8 @@
             insert_time timestamp
         );
         ```
-
+        
         2. 复制表
-
             create table 表名 like 被复制的表名
 
     - Retrieve 查询表
@@ -730,10 +727,154 @@ select * from 表名;  查询所有
         - 查看事务的默认提交方式：SELECT @@autocommit; -- 1 代表自动提交  0 代表手动提交
         - 修改默认提交方式： set @@autocommit = 0;
         - Oracle 数据库默认是手动提交事务
+    
 - 事务的四大特征：
-    - 隔离性
+  
+    - 原子性：是不可分割的最小操作单位，要么同时成功，要么同时失败。
+    - 持久性：当事务提交或回滚后，数据库会持久化的保存数据。
+    -  隔离性：多个事务之间。相互独立。
+    - 一致性：事务操作前后，数据总量不变
+    
+- 事务的隔离级别：
+
+    - 概念：多个事务之间隔离的，相互独立的。但是如果多个事务操作同一批数据，则会引发一些问题，设置不同的隔离级别就可以解决这些问题。
+
+    - 存在的问题：
+
+        - 脏读：一个事务，读取到另一个事务中没有提交的数据
+        - 不可重复读(虚读)：在同一个事务中，两次读取到的数据不一样。
+        - 幻读：一个事务操作(DML)数据表中所有记录，另一个事务添加了一条数据，则第一个事务查询不到自己的修改。
+
+    - 隔离级别：
+
+        1. read uncommitted：读未提交
+
+            - 产生的问题：脏读、不可重复读、幻读
+
+        2. read committed：读已提交 （Oracle）
+
+            - 产生的问题：不可重复读、幻读
+
+        3. repeatable read：可重复读 （MySQL默认）
+
+            - 产生的问题：幻读
+
+        4. serializable：串行化
+
+            - 可以解决所有的问题
+
+            隔离级别从小到大安全性越来越高，但是效率越来越低
+
+    - 数据库查询隔离级别：select @@tx_isolation;
+
+    - 数据库设置隔离级别：set global transaction isolation level 级别字符串；
+
+
 
 ##  DCL
+
+- 管理用户：mysql数据库，user表
+
+    1. 添加用户：
+
+        ```sql
+        语法：CREATE USER '用户名'@'主机名' IDENTIFIED BY '密码';
+        ```
+
+    2. 修改用户密码：authentication_string替换第一个PASSWORD
+
+        ```sql
+        UPDATE USER SET PASSWORD = PASSWORD('新密码') WHERE USER = '用户名';
+        SET PASSWORD FOR '用户名'@'主机名' = PASSWORD('新密码');
+        ```
+
+    3. 删除用户：DROP
+
+        ```sql
+        语法：DROP USER '用户名'@'主机名';
+        ```
+
+    4. 修改root用户密码：
+
+        - 管理员权限下关闭mysql服务 net stop mysql;   
+        - 无验证启动mysql服务 mysqld --skip-grant-tables;
+        - 开启新的cmd窗口，直接mysql登入
+        - 修改root用户密码
+        - 关掉两个cmd窗口
+        - 启动任务管理器，关闭mysqld进程
+        - 打开新的cmd窗口，启动mysql服务
+        - 使用新密码登入
+
+- 授权管理：
+
+    1. 查询权限：
+
+        ```SQL
+        SHOW GRANTS FOR '用户名'@'主机名';
+        SHOW GRANTS FOR 'lisi'@'%';
+        ```
+
+    2. 授予权限：
+
+        ```sql
+        grant 权限列表 on 数据库名.表名 to '用户名'@'主机名';
+        给张三用户授予所有权限，在任意数据库任意表上
+        GRANT ALL ON *.* TO 'zhangsan'@'localhost';
+        ```
+
+    3. 撤销权限：
+
+        ```sql
+        revoke 权限列表 on 数据库名.表名 from '用户名'@'主机名';
+        REVOKE UPDATE ON db3.`account` FROM 'lisi'@'%';
+        ```
+
+        
+
+# Mysql高级
+
+##  Linux下安装Mysql（有空补全）
+
+
+
+
+
+##  索引
+
+- 索引（index）是帮助Mysql进行高效获取数据的一种数据结构，该数据结构通过某种方式指向或引用存储的数据
+
+- 无索引的情况下，Mysql查询数据默认从上往下进行全表扫描（filescan）
+
+- 索引的优劣
+
+    - 优势：
+        - 提高数据检索的效率，降低数据库的IO成本
+        - 通过索引对数据进行排序，降低数据排序的成本，降低CPU的消耗
+    - 劣势：
+        - 占用磁盘空间：索引实际上也是一张表，该表保存了主键与索引字段，并指向实体类的记录，
+        - 降低更新表的速度：Mysql不仅要保存数据，还要保存索引文件每次的更新
+
+- 索引的结构：
+
+    - BTREE索引：Mysql默认的InnoDB引擎支持的索引
+
+    - HASH索引：
+
+    - R-tree（空间索引）
+
+    - Full-text（全文索引）
+
+        
+
+- BTREE结构
+
+    
+
+    
+
+    
+
+    
 
 
 
