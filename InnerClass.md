@@ -49,7 +49,7 @@
         -   Inner inner = new Inner
     -   在外部类之外创建内部类实例
         -   (new Outer()).new Inner()
-        -   Inner inner = new Outer().new Inner()
+        -   Outer.Inner inner = new Outer().new Inner()
         -   Outer outer = new Outer(); Inner inner = outer.new Inner()
 
 
